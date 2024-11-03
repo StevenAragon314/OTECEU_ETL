@@ -11,33 +11,12 @@ from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 import random
-import nltk
-import sys
+from function.manejo_datos import save_data
 
 # Modulos de function
 from function.manejo_datos import save_data
 from function.utilidades import quitar_tildes
 from function.constantes import TEXTO_BASURA
-
-# Inicialización de stopwords
-try:
-    nltk.corpus.stopwords.words("spanish")
-except LookupError:
-    nltk.download("stopwords")
-
-def obtener_ruta_recurso(ruta_relativa):
-    """Obtiene la ruta absoluta compatible con PyInstaller."""
-    if getattr(sys, 'frozen', False):
-        # Cuando se ejecuta como un ejecutable
-        base_dir = sys._MEIPASS  # Directorio temporal del ejecutable
-    else:
-        # Cuando se ejecuta como un script
-        base_dir = os.path.dirname(__file__)  # Directorio del script
-    return os.path.join(base_dir, ruta_relativa)
-
-# Obtener la ruta al archivo CSV
-hist_data_path = obtener_ruta_recurso('data\\historic_data.csv')
-print(hist_data_path)  # Solo para verificar la salida
 
 def scrape_data(df_path): 
     try:
@@ -147,18 +126,21 @@ def scrape_data(df_path):
     # Guardar los datos recolectados
     try:
         id_proyecto = [int(last_id) + int(n) for n in id_proyecto]
-        df_nuevo = pd.DataFrame({
-            'id_atributo': id_proyecto,
-            'titulo_articulo': titulo_articulo,
-            'resumen_art': resumen_art,
-            'fecha_publicacion': fecha_publicacion,
-            'autor_redacta': autor_redacta,
-            'imagen_url': imagen_url,
-            'notice_url': notice_url,
-            'notice_completa': notice_completa,
-            'change_date': fecha_publicacion
-        })
+
+        df_nuevo = save_data(
+            id_atributo = id_proyecto,
+            titulo_articulo = titulo_articulo,
+            resumen_art = resumen_art,
+            fecha_publicacion = fecha_publicacion,
+            autor_redacta = autor_redacta,
+            imagen_url = imagen_url,
+            notice_url = notice_url,
+            notice_completa = notice_completa,
+            change_date = fecha_publicacion
+        )
+
         df_nuevo.to_csv(df_path, mode='a', header=not os.path.exists(df_path), index=False)
+        
         print("Scraping completado y datos guardados.")
     except Exception as e:
         print(f"Error al guardar los datos: {e}")
