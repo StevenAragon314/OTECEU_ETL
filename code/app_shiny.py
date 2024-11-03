@@ -63,138 +63,134 @@ app_ui = ui.page_fluid(
     ),
 )
 
+import pandas as pd
+from shiny import reactive, render, ui
+from shiny.types import Inputs, Outputs, Session
+
+# Asegúrate de definir 'hist_data_path' y 'ws' en algún lugar del código
+
 def server(input: Inputs, output: Outputs, session: Session):
-
-    index = reactive.Value(0)
-
-    @reactive.calc
+    
+    @reactive.Calc
     def data():
+        # Verifica si se ha subido un archivo
         if input.file_upload() is not None:
+            # Obtén la ruta temporal del archivo subido
             file_path = input.file_upload()[0]["datapath"]
             try:
+                # Cargar el CSV usando la ruta
                 df = pd.read_csv(file_path)
-                df = df.loc[df["n_by_text"] >= 4, :]
-                if input.daterange()[0] and input.daterange()[1]:
-                    df = df.loc[
-                        (df["fecha_publicacion_CD"] <= input.daterange()[1]) &
-                        (df["fecha_publicacion_CD"] >= input.daterange()[0]), :
-                    ]
-                l_df = len(df)
-                print(f"CSV cargado exitosamente con {l_df} registros.")
-                return (df, l_df, file_path)
-            except FileNotFoundError:
-                print(f"Error: No se encontró el archivo en la ruta {file_path}.")
+                return df
             except Exception as e:
                 print(f"Error al cargar el archivo CSV: {e}")
-        # Retorno por defecto
-        return pd.DataFrame(), 0, None
+                return pd.DataFrame()
+        else:
+            return pd.DataFrame()
 
     @output
     @render.text
     def file_status():
-        df, l_df, _ = data()
-        if input.file_upload() is not None and l_df > 0:
-            return "Archivo cargado y filtrado exitosamente."
-        elif input.file_upload() is not None:
-            return "El archivo no contiene registros después del filtrado."
+        if input.file_upload() is not None:
+            return "Archivo cargado exitosamente."
         return "No se ha cargado ningún archivo."
 
     @output
-    @render.table
+    @render.text
     def file_preview():
-        df, l_df, _ = data()
+        df = data()
         if not df.empty:
-            return df.head()
-        return pd.DataFrame()
+            return df.head().to_string()  # Muestra las primeras filas del DataFrame
+        return "No hay datos para mostrar."
 
+    df = data()
+    l_df = len(df)
+
+    # Incrementar el índice
     @reactive.Effect
     @reactive.event(input.action_suma)
     def _aumentar_index():
-        _, l_df, _ = data()
         if l_df > 0:
             nuevo_index = (index() + 1) % l_df
             index.set(nuevo_index)
 
+    # Decrementar el índice
     @reactive.Effect
     @reactive.event(input.action_resta)
     def _disminuir_index():
-        _, l_df, _ = data()
         if l_df > 0:
             nuevo_index = (index() - 1) % l_df
             index.set(nuevo_index)
 
+    # Función para obtener la fila actual
     def get_current_row():
-        _, l_df, _ = data()
         if l_df > 0:
-            return data()[0].iloc[index()]
+            return df.iloc[index()]
         else:
-            return None
+            return pd.Series()
 
+    # Salida de imagen
     @output
     @render.ui
     def image_output():
         row = get_current_row()
-        imagen_url = row.get('imagen_url', '') if row is not None else ''
+        imagen_url = row.get('imagen_url', '')
         if imagen_url:
             return ui.HTML(f'<img src="{imagen_url}" alt="Imagen no disponible" style="width:100%; height:100%;" />')
-        return ui.HTML('<p>No hay imagen disponible.</p>')
+        return ui.HTML("No image available.")
 
+    # Salida de resumen
     @output
     @render.text
     def text_resumen():
         row = get_current_row()
-        return row.get('resumen_art', '') if row is not None else ''
+        return row.get('resumen_art', '')
 
+    # Salida de autor
     @output
     @render.text
     def text_autor():
         row = get_current_row()
-        return row.get('autor_redacta', '') if row is not None else ''
+        return row.get('autor_redacta', '')
 
+    # Salida de fecha
     @output
     @render.text
     def text_fecha():
         row = get_current_row()
-        return row.get('fecha_publicacion', '').upper() if row is not None else ''
+        return row.get('fecha_publicacion', '').upper()
 
+    # Salida de título
     @output
     @render.text
     def text_title():
         row = get_current_row()
-        return row.get('titulo_articulo', '') if row is not None else ''
+        return row.get('titulo_articulo', '')
 
+    # Salida de enlace de la noticia
     @output
     @render.text
     def text_link_notice():
         row = get_current_row()
-        return row.get('notice_url', '') if row is not None else ''
+        return row.get('notice_url', '')
 
+    # Salida de enlace de la imagen
     @output
     @render.text
     def text_link_img():
         row = get_current_row()
-        return row.get('imagen_url', '') if row is not None else ''
+        return row.get('imagen_url', '')
 
-    # Variable reactiva para el estado de actualización
-    update_status = reactive.Value("")
-
+    # Salida de actualización de datos
     @output
     @render.text
-    def counter():
-        return update_status()
-
-    @reactive.Effect
     @reactive.event(input.action_button)
-    def _actualizar_datos():
-        _, _, file_path = data()
-        if file_path:
-            try:
-                ws.scrape_data(file_path)
-                update_status.set("Datos actualizados exitosamente.")
-            except Exception as e:
-                update_status.set(f"Error durante la actualización: {str(e)}")
-        else:
-            update_status.set("No hay archivo cargado para actualizar.")
+    def counter():
+        try:
+            ws.scrape_data(hist_data_path)  # Asegúrate de que esta función esté definida en 'ws'
+            return "Datos actualizados exitosamente."
+        except Exception as e:
+            return f"Error durante la actualización: {str(e)}"
+
 
 
 app = App(app_ui, server)
