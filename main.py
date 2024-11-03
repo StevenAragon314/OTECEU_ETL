@@ -1,3 +1,5 @@
+# main.py
+
 from code.app_shiny import run_app
 import webbrowser
 import threading
