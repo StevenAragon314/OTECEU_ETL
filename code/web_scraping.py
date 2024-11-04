@@ -32,7 +32,8 @@ def scrape_data(df_path):
         return
 
     try:
-        last_date = df_historico["fecha_publicacion"].iloc[0]
+        df_historico["fecha_publicacion_CD"] = pd.to_datetime(df_historico["fecha_publicacion_CD"])
+        last_date = df_historico["fecha_publicacion_CD"].max()
         last_id = df_historico["id_atributo"].max()
     except (KeyError, IndexError):
         print("No hay datos previos. Iniciando desde el principio.")
