@@ -40,7 +40,7 @@ def scrape_data(df_path):
 
     # Configuración del driver Selenium
     options = Options()
-    options.add_argument("--headless")  # Ejecución en segundo plano
+    options.add_argument("--headless")  # Ejecución en segundo plano -que no aparezca la ventana-
 
     try:
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
@@ -49,7 +49,7 @@ def scrape_data(df_path):
         return
 
     base_url = "https://www.ucr.ac.cr"
-    x = 3  # Número de páginas a recorrer para evitar sobrecarga
+    x = 3  # Número de páginas a recorrer -para evitar sobrecarga-
     add = len(df_historico) + 1
 
     # Listas para almacenar los datos recolectados

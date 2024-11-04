@@ -10,7 +10,7 @@ hist_data_path = r'C:\Users\Steve\freelance_work\OTECEU_ETL\data\historic_data.c
 # === Definición de la Interfaz de Usuario ===
 app_ui = ui.page_fluid(
     ui.tags.img(
-            src='https://www.ucr.ac.cr/vistas/webucr_ucr_5/imagenes/firma-ucr-c.svg',
+            src='https://www.ucr.ac.cr/vistas/webucr_ucr_5/imagenes/firma-ucr-c.svg', # Link oficial de la img de UCR
             height="100%", width="100%"
         ),
     ui.navset_card_pill(
@@ -62,6 +62,7 @@ app_ui = ui.page_fluid(
     ),
 )
 
+# ================= Definición del Server ===================
 def server(input: Inputs, output: Outputs, session: Session):
     
     @reactive.Calc
@@ -186,6 +187,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
 app = App(app_ui, server)
 
+# Covirtiendolo en una función para poderlo llamar luego como un método.
 def run_app():
     """Función para ejecutar la aplicación localmente."""
     return app.run()     
