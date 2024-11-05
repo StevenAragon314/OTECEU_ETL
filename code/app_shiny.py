@@ -15,7 +15,7 @@ app_ui = ui.page_fluid(
         ui.tags.style("body { background-color: lightblue; }"),
         ui.layout_columns(
             ui.card(
-                ui.tags.b("Información recolectada del sitio oficial NOTICIAS UCR:"),
+                ui.tags.b(f'Información recolectada del sitio oficial NOTICIAS UCR:'),
                 ui.layout_columns(
                     ui.card(
                         ui.tags.b("Título de la noticia"),
@@ -27,7 +27,7 @@ app_ui = ui.page_fluid(
                         ),
                         ui.tags.b("Temporalidad de información:"),
                         ui.output_text_verbatim("flecha_1"),
-                        ui.output_text_verbatim("flecha_2")
+                        ui.output_text_verbatim("flecha_2"),
                     ),
                     ui.card(
                         ui.tags.b("Resumen"),
@@ -48,7 +48,7 @@ app_ui = ui.page_fluid(
                     ui.card(
                         ui.tags.b("Fuente de la información"),
                         ui.card(ui.tags.b("Link de imagen:"), ui.output_text("text_link_img")),
-                        ui.card(ui.tags.b("Link de noticia:"), ui.output_text("text_link_notice"))
+                        ui.card(ui.tags.b("Link de noticia:"), ui.output_text("text_link_notice")),
                     )
                 )
             )
@@ -86,8 +86,6 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df["fecha_publicacion_CD"] = pd.to_datetime(df["fecha_publicacion_CD"], format= "%Y-%m-%d")
                 df.sort_values("fecha_publicacion_CD", ascending= False, inplace= True)
                 start_date_str, end_date_str = input.daterange()
-
-                # Convertir las fechas a objetos datetime
                 start_date = pd.to_datetime(start_date_str, format="%Y-%m-%d")
                 end_date = pd.to_datetime(end_date_str, format="%Y-%m-%d")
                 df = df.loc[
@@ -136,7 +134,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         row = get_current_row()
         imagen_url = row.get('imagen_url', '')
         if imagen_url:
-            return ui.HTML(f'<img src="{imagen_url}" alt="No hay una imagen disponible, ya que hay un video." style="width:100%; height:100%;" />')
+            return ui.HTML(f'<img src="{imagen_url}" alt="Imagen no disponible, hay un video en la fuente" style="width:100%; height:100%;" />')
         return ui.HTML("No image available.")
 
     @output
@@ -176,6 +174,16 @@ def server(input: Inputs, output: Outputs, session: Session):
         row = get_current_row()
         return row.get('imagen_url', '')
     
+    @output
+    @render.text
+    def flecha_1():
+        return "⬅️: Información de la más antigua a la más reciente."
+    
+    @output
+    @render.text
+    def flecha_2():
+        return "⬅️: Información de la más reciente a la más antigua."
+    
     # Variable reactiva para el mensaje de actualización
     update_message = reactive.Value("")
 
@@ -192,20 +200,11 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.text
     def counter():
         return update_message()
-    
-    @render.text  
-    def flecha_1():
-        return "⬅️: Muestra la información más antigua a la más nueva"
-    
-    @render.text  
-    def flecha_2():
-        return "➡️: Muestra la información más nueva a la más antigua"
 
 
 
 app = App(app_ui, server)
 
-# Covirtiendolo en una función para poderlo llamar luego como un método.
 def run_app():
     """Función para ejecutar la aplicación localmente."""
-    return app.run()     
+    return app.run()
