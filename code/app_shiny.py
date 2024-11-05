@@ -4,9 +4,6 @@ from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 from shiny.types import FileInfo
 import code.web_scraping as ws
 
-
-hist_data_path = r'C:\Users\Steve\freelance_work\OTECEU_ETL\data\historic_data.csv'
-
 # === Definición de la Interfaz de Usuario ===
 app_ui = ui.page_fluid(
     ui.tags.img(
@@ -28,6 +25,9 @@ app_ui = ui.page_fluid(
                             ui.input_action_button("action_resta", "⬅️"),
                             ui.input_action_button("action_suma", "➡️")
                         ),
+                        ui.tags.b("Temporalidad de información:"),
+                        ui.output_text_verbatim("flecha_1"),
+                        ui.output_text_verbatim("flecha_2")
                     ),
                     ui.card(
                         ui.tags.b("Resumen"),
@@ -56,7 +56,7 @@ app_ui = ui.page_fluid(
         ),
         ui.nav_panel( "Ajuste de Datos",
          ui.input_file("file_upload", "Selecciona un archivo CSV", accept=[".csv"]),
-        ui.input_date_range("daterange", "Selecciona un rango de fechas", start= '2024-03-01'),
+        ui.input_date_range("daterange", "Selecciona un rango de fechas", start= '2024-05-13'),
         ui.input_numeric("strong_num", "¿Qué tan estricto debe ser el modelo?", 8, min= 4, max= 20)
         ),
     ),
@@ -85,6 +85,16 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df = pd.read_csv(path)
                 df["fecha_publicacion_CD"] = pd.to_datetime(df["fecha_publicacion_CD"], format= "%Y-%m-%d")
                 df.sort_values("fecha_publicacion_CD", ascending= False, inplace= True)
+                start_date_str, end_date_str = input.daterange()
+
+                # Convertir las fechas a objetos datetime
+                start_date = pd.to_datetime(start_date_str, format="%Y-%m-%d")
+                end_date = pd.to_datetime(end_date_str, format="%Y-%m-%d")
+                df = df.loc[
+                        (df["fecha_publicacion_CD"] >= start_date) & 
+                        (df["fecha_publicacion_CD"] <= end_date), 
+                        :
+                    ]
                 df = df.loc[df["n_by_text"] >= 8, :]
                 return df
             except Exception as e:
@@ -126,7 +136,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         row = get_current_row()
         imagen_url = row.get('imagen_url', '')
         if imagen_url:
-            return ui.HTML(f'<img src="{imagen_url}" alt="Imagen no disponible" style="width:100%; height:100%;" />')
+            return ui.HTML(f'<img src="{imagen_url}" alt="No hay una imagen disponible, ya que hay un video." style="width:100%; height:100%;" />')
         return ui.HTML("No image available.")
 
     @output
@@ -182,6 +192,14 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.text
     def counter():
         return update_message()
+    
+    @render.text  
+    def flecha_1():
+        return "⬅️: Muestra la información más antigua a la más nueva"
+    
+    @render.text  
+    def flecha_2():
+        return "➡️: Muestra la información más nueva a la más antigua"
 
 
 
