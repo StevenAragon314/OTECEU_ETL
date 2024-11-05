@@ -129,7 +129,7 @@ def scrape_data(df_path):
         id_proyecto = [int(last_id) + int(n) for n in id_proyecto]
 
         df_nuevo = save_data(
-            id_atributo = id_proyecto,
+            id_proyecto = id_proyecto,
             titulo_articulo = titulo_articulo,
             resumen_art = resumen_art,
             fecha_publicacion = fecha_publicacion,
